@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DonorFlow — Bright Futures Foundation</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --navy: #0d1f35;
+  --navy-mid: #1a3a5c;
+  --navy-light: #244b75;
+  --teal: #0e9e78;
+  --teal-light: #1bb88d;
+  --teal-dim: rgba(14,158,120,0.12);
+  --amber: #e8a020;
+  --amber-dim: rgba(232,160,32,0.12);
+  --coral: #e05a3a;
+  --coral-dim: rgba(224,90,58,0.12);
+  --slate: #f5f4f0;
+  --slate-mid: #eceae4;
+  --border: #e0ddd5;
+  --text: #0d1f35;
+  --text-mid: #4a5568;
+  --text-dim: #8a9ab0;
+  --white: #ffffff;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--slate); color: var(--text); min-height: 100vh; }
+
+.topnav {
+  background: var(--navy);
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topnav-brand { display: flex; align-items: center; gap: 10px; }
+.brand-text { font-family: var(--font-display); font-size: 18px; color: var(--white); letter-spacing: -.01em; }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all .2s;
+  letter-spacing: .02em;
+}
+.nav-tab:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.07); }
+.nav-tab.active { color: var(--white); background: rgba(255,255,255,.13); }
+.nav-right { font-size: 11px; color: rgba(255,255,255,.4); font-family: var(--font-mono); }
+
+.shell { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+.section { display: none; }
+.section.visible { display: block; }
+
+.page-header { margin-bottom: 2rem; }
+.page-header .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; color: var(--teal); text-transform: uppercase; margin-bottom: 6px; }
+.page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--navy); line-height: 1.15; }
+.page-header p { font-size: 14px; color: var(--text-mid); margin-top: 6px; max-width: 600px; line-height: 1.6; }
+
+.controls-bar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+.ctrl { display: flex; flex-direction: column; gap: 5px; }
+.ctrl label { font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; }
+.ctrl select {
+  padding: 7px 28px 7px 12px;
+  font-size: 13px;
+  font-family: var(--font-body);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--slate);
+  color: var(--text);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9ab0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.ctrl select:focus { outline: none; border-color: var(--teal); }
+.ctrl-slider { display: flex; align-items: center; gap: 8px; }
+.ctrl-slider input[type=range] { width: 110px; accent-color: var(--teal); cursor: pointer; }
+.ctrl-val { font-size: 13px; font-weight: 600; color: var(--navy); font-family: var(--font-mono); min-width: 36px; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+.metric-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--teal); }
+.metric-card.amber::before { background: var(--amber); }
+.metric-card.coral::before { background: var(--coral); }
+.metric-card.navy::before { background: var(--navy-mid); }
+.m-label { font-size: 10px; font-weight: 600; color: var(--text-dim); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.m-value { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+.m-sub { font-size: 11px; color: var(--text-dim); margin-top: 5px; }
+.m-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 6px; }
+.badge-green { background: rgba(14,158,120,.12); color: #0a7a5e; }
+.badge-amber { background: rgba(232,160,32,.12); color: #9a6a10; }
+.badge-red { background: rgba(224,90,58,.12); color: #a83820; }
+.badge-blue { background: rgba(26,58,92,.1); color: var(--navy-mid); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+.three-col { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin-bottom: 1.5rem; }
+
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.card-header { padding: 16px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.card-header h2 { font-size: 13px; font-weight: 600; color: var(--navy); letter-spacing: -.01em; }
+.card-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.card-body { padding: 20px; }
+.card-footer { padding: 12px 20px; border-top: 1px solid var(--border); background: var(--slate); font-size: 11px; color: var(--text-dim); }
+
+.chart-wrap { position: relative; width: 100%; }
+.chart-legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.chart-legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-mid); font-weight: 500; }
+.chart-legend .dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+.seg-card { background: var(--white); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; cursor: pointer; transition: border-color .2s, transform .15s, box-shadow .2s; }
+.seg-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); border-color: var(--navy-mid); }
+.seg-card.active { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-dim); }
+.seg-tier { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.seg-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 10px; }
+.seg-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.seg-table td { padding: 4px 0; color: var(--text-mid); border-bottom: 1px solid var(--slate-mid); }
+.seg-table td:last-child { text-align: right; color: var(--navy); font-weight: 600; font-family: var(--font-mono); }
+.seg-table tr:last-child td { border-bottom: none; }
+.seg-strategy { font-size: 11px; color: var(--text-dim); margin-top: 10px; line-height: 1.55; padding-top: 10px; border-top: 1px solid var(--slate-mid); }
+
+.month-detail { background: var(--slate); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; font-size: 12px; color: var(--text-dim); margin-top: 12px; min-height: 50px; }
+.md-title { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 10px; font-family: var(--font-display); }
+.md-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.md-row:last-child { border-bottom: none; font-weight: 700; color: var(--navy); font-size: 13px; padding-top: 8px; }
+
+.budget-bar-wrap { margin-bottom: 14px; }
+.budget-bar-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.budget-bar-label span:first-child { font-size: 12px; font-weight: 500; color: var(--navy); }
+.budget-bar-label span:last-child { font-size: 12px; font-family: var(--font-mono); color: var(--text-mid); }
+.budget-bar-track { height: 8px; background: var(--slate-mid); border-radius: 20px; overflow: hidden; }
+.budget-bar-fill { height: 100%; border-radius: 20px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+.cf-month-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 8px; }
+.cf-cell { border-radius: 8px; padding: 10px 8px; text-align: center; border: 1px solid var(--border); background: var(--white); }
+.cf-cell.surplus { border-color: rgba(14,158,120,.3); background: rgba(14,158,120,.06); }
+.cf-cell.deficit { border-color: rgba(224,90,58,.3); background: rgba(224,90,58,.06); }
+.cf-cell .cf-month { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: .05em; margin-bottom: 4px; }
+.cf-cell .cf-amount { font-size: 12px; font-family: var(--font-mono); font-weight: 600; }
+.cf-cell.surplus .cf-amount { color: #0a7a5e; }
+.cf-cell.deficit .cf-amount { color: #a83820; }
+.cf-cell .cf-label { font-size: 9px; margin-top: 2px; font-weight: 600; letter-spacing: .05em; }
+.cf-cell.surplus .cf-label { color: rgba(14,158,120,.7); }
+.cf-cell.deficit .cf-label { color: rgba(224,90,58,.7); }
+
+.scenario-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.scenario-btn { padding: 14px 12px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--white); cursor: pointer; text-align: left; transition: all .2s; font-family: var(--font-body); }
+.scenario-btn:hover { border-color: var(--navy-mid); background: var(--slate); }
+.scenario-btn.active { border-color: var(--teal); background: var(--teal-dim); }
+.sc-label { font-size: 11px; font-weight: 700; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4px; }
+.sc-title { font-size: 13px; font-weight: 600; color: var(--navy); }
+.sc-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+.program-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.program-row:last-child { border-bottom: none; }
+.program-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.program-name { font-size: 13px; font-weight: 500; color: var(--navy); }
+.program-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: .04em; white-space: nowrap; }
+.program-bar { flex: 2; height: 6px; background: var(--slate-mid); border-radius: 20px; overflow: hidden; }
+.program-bar-fill { height: 100%; border-radius: 20px; transition: width .5s; }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { font-size: 10px; font-weight: 700; color: var(--text-dim); letter-spacing: .07em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--border); }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--slate-mid); color: var(--text-mid); vertical-align: middle; }
+.data-table td:first-child { color: var(--navy); font-weight: 500; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--slate); }
+
+.obs-list { display: flex; flex-direction: column; gap: 10px; }
+.obs-item { display: flex; gap: 10px; padding: 12px 14px; background: var(--slate); border-radius: var(--radius); border-left: 3px solid var(--teal); }
+.obs-item.warn { border-left-color: var(--amber); }
+.obs-item.alert { border-left-color: var(--coral); }
+.obs-text { font-size: 12px; color: var(--text-mid); line-height: 1.55; }
+.obs-text strong { color: var(--navy); font-weight: 600; }
+
+.budget-input-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.budget-input-item { display: flex; flex-direction: column; gap: 4px; }
+.budget-input-item label { font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: .05em; text-transform: uppercase; }
+.budget-input-item input[type=range] { accent-color: var(--navy-mid); cursor: pointer; width: 100%; }
+.bi-val { font-size: 12px; font-family: var(--font-mono); color: var(--navy); font-weight: 600; }
+
+.report-footer { margin-top: 3rem; padding: 20px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.report-footer p { font-size: 11px; color: var(--text-dim); }
+
+@media (max-width: 768px) {
+  .metric-grid { grid-template-columns: repeat(2,1fr); }
+  .two-col, .three-col, .scenario-grid { grid-template-columns: 1fr; }
+  .cf-month-grid { grid-template-columns: repeat(4,1fr); }
+  .topnav { padding: 0 1rem; }
+  .nav-right { display: none; }
+  .shell { padding: 1.5rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="28" rx="6" fill="rgba(255,255,255,.12)"/>
+      <path d="M6 20L10 13L14 16.5L18 9L22 14" stroke="#0e9e78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="22" cy="14" r="2.5" fill="#0e9e78"/>
+    </svg>
+    <span class="brand-text">DonorFlow</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('forecast',this)">Forecast</button>
+    <button class="nav-tab" onclick="showSection('budget',this)">Budget Allocation</button>
+    <button class="nav-tab" onclick="showSection('cashflow',this)">Cash Flow</button>
+    <button class="nav-tab" onclick="showSection('scenario',this)">Scenario Planning</button>
+    <button class="nav-tab" onclick="showSection('programs',this)">Programs</button>
+  </div>
+  <div class="nav-right" id="nav-date"></div>
+</nav>
+
+<div class="shell">
+
+<!-- FORECAST -->
+<div class="section visible" id="sec-forecast">
+  <div class="page-header">
+    <div class="eyebrow">Bright Futures Foundation · Fiscal Planning Division</div>
+    <h1>Annual Donation Forecast</h1>
+    <p>Adjust retention assumptions and segment filters to project donation income across all donor tiers for the selected fiscal year.</p>
+  </div>
+  <div class="controls-bar">
+    <div class="ctrl">
+      <label>Fiscal year</label>
+      <select id="year-sel"><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select>
+    </div>
+    <div class="ctrl">
+      <label>Segment filter</label>
+      <select id="seg-sel">
+        <option value="all">All segments</option>
+        <option value="t1">Tier 1 — Champions</option>
+        <option value="t2">Tier 2 — Regulars</option>
+        <option value="t3">Tier 3 — Growth Targets</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Champions retention · <span id="r1v" style="color:var(--navy);font-family:var(--font-mono)">94%</span></label>
+      <div class="ctrl-slider"><input type="range" id="ret1" min="70" max="100" value="94" step="1"></div>
+    </div>
+    <div class="ctrl">
+      <label>Regulars retention · <span id="r2v" style="color:var(--navy);font-family:var(--font-mono)">67%</span></label>
+      <div class="ctrl-slider"><input type="range" id="ret2" min="40" max="90" value="67" step="1"></div>
+    </div>
+    <div class="ctrl">
+      <label>Re-engagement rate · <span id="r3v" style="color:var(--navy);font-family:var(--font-mono)">35%</span></label>
+      <div class="ctrl-slider"><input type="range" id="ret3" min="10" max="60" value="35" step="1"></div>
+    </div>
+  </div>
+  <div class="metric-grid" id="forecast-metrics"></div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <div><h2 id="chart-title">Monthly donation trends &amp; forecast — all segments</h2><div class="card-sub">Click any bar to view a monthly tier breakdown</div></div>
+      <div class="chart-legend" id="chart-legend"></div>
+    </div>
+    <div class="card-body">
+      <div class="chart-wrap" style="height:240px"><canvas id="mainChart" role="img" aria-label="Monthly donation forecast bar chart"></canvas></div>
+      <div class="month-detail" id="month-detail"><span>Click any bar to view monthly breakdown by tier.</span></div>
+    </div>
+  </div>
+  <div class="three-col" id="seg-cards-grid"></div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h2>Key observations</h2></div>
+    <div class="card-body"><div class="obs-list" id="obs-list"></div></div>
+  </div>
+</div>
+
+<!-- BUDGET -->
+<div class="section" id="sec-budget">
+  <div class="page-header">
+    <div class="eyebrow">Budget Allocation</div>
+    <h1>Allocate Projected Income</h1>
+    <p>Distribute your forecasted donation revenue across operational categories. Adjust sliders to model different budget scenarios and monitor surplus or deficit in real time.</p>
+  </div>
+  <div class="metric-grid" id="budget-metrics"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header"><h2>Budget category allocation</h2><div class="card-sub">Drag to adjust percentages</div></div>
+      <div class="card-body" id="budget-sliders"></div>
+      <div class="card-footer" id="budget-total-line"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Allocation breakdown</h2><div class="card-sub">Based on <span id="budget-year-label">2026</span> forecast</div></div>
+      <div class="card-body"><div style="height:260px;position:relative"><canvas id="budgetChart" role="img" aria-label="Budget allocation donut chart"></canvas></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><h2>Budget line breakdown</h2></div>
+    <div class="card-body" style="padding:0"><table class="data-table" id="budget-table"></table></div>
+  </div>
+</div>
+
+<!-- CASH FLOW -->
+<div class="section" id="sec-cashflow">
+  <div class="page-header">
+    <div class="eyebrow">Cash Flow Analysis</div>
+    <h1>Monthly Surplus &amp; Deficit</h1>
+    <p>Compare projected donation income against estimated monthly operating expenses. Identify months where reserves may need to be drawn and plan campaigns accordingly.</p>
+  </div>
+  <div class="metric-grid" id="cf-metrics"></div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h2>Monthly cash flow — income vs. expenses</h2></div>
+    <div class="card-body"><div class="chart-wrap" style="height:260px"><canvas id="cfChart" role="img" aria-label="Monthly cash flow comparison chart"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><h2>Month-by-month surplus / deficit</h2><div class="card-sub">Green = surplus · Red = deficit</div></div>
+    <div class="card-body"><div class="cf-month-grid" id="cf-grid"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>Monthly expense assumptions</h2><div class="card-sub">Adjust base operating costs</div></div>
+    <div class="card-body"><div class="budget-input-grid" id="cf-expense-inputs"></div></div>
+  </div>
+</div>
+
+<!-- SCENARIO -->
+<div class="section" id="sec-scenario">
+  <div class="page-header">
+    <div class="eyebrow">Scenario Planning</div>
+    <h1>What-If Analysis</h1>
+    <p>Model optimistic, base, and pessimistic scenarios to see how changes in donor retention force budget adjustments across all categories.</p>
+  </div>
+  <div class="scenario-grid" id="scenario-btns"></div>
+  <div class="metric-grid" id="scenario-metrics"></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header"><h2>Scenario comparison</h2></div>
+      <div class="card-body"><div class="chart-wrap" style="height:240px"><canvas id="scenarioChart" role="img" aria-label="Scenario comparison stacked bar chart"></canvas></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Budget impact by category</h2><div class="card-sub">How this scenario forces reallocation</div></div>
+      <div class="card-body" id="scenario-impact"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRAMS -->
+<div class="section" id="sec-programs">
+  <div class="page-header">
+    <div class="eyebrow">Program Budget Health</div>
+    <h1>Per-Program Funding Status</h1>
+    <p>Monitor whether each initiative is fully funded, at risk, or in deficit based on current retention assumptions and donor tier contributions.</p>
+  </div>
+  <div class="metric-grid" id="prog-metrics"></div>
+  <div class="two-col" style="margin-bottom:1.5rem">
+    <div class="card">
+      <div class="card-header"><h2>Program funding health</h2><div class="card-sub">Based on current retention assumptions</div></div>
+      <div class="card-body" id="prog-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Budget vs. funded by program</h2></div>
+      <div class="card-body"><div class="chart-wrap" style="height:280px"><canvas id="progChart" role="img" aria-label="Program funding horizontal bar chart"></canvas></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>Program detail</h2></div>
+    <div class="card-body" style="padding:0"><table class="data-table" id="prog-table"></table></div>
+  </div>
+</div>
+
+<div class="report-footer">
+  <p>DonorFlow · Bright Futures Foundation · Fiscal Planning Division · Confidential</p>
+  <p id="footer-date"></p>
+</div>
+</div>
+
+<script>
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SEASONAL=[0.85,0.82,0.96,0.93,1.02,0.72,0.70,0.74,0.99,1.06,1.08,1.35];
+const HIST={
+  2024:[15800,15200,18100,17400,19100,13400,13000,13700,18600,19800,20100,25000],
+  2025:[17600,16900,20200,19400,21300,14900,14500,15300,20700,22100,22400,27900]
+};
+const BASE={
+  t1:{donors:142,avgGiving:1840,baseRet:94,contribution:95400,label:'Champions',color:'#0e9e78'},
+  t2:{donors:388,avgGiving:310,baseRet:67,contribution:120280,label:'Regulars',color:'#1a3a5c'},
+  t3:{donors:620,avgGiving:85,baseRet:35,contribution:60720,label:'Growth Targets',color:'#e8a020'}
+};
+const BUDGET_CATS=[
+  {key:'programs',label:'Programs & Services',color:'#0e9e78',pct:45},
+  {key:'ops',label:'Operations',color:'#1a3a5c',pct:20},
+  {key:'fundraising',label:'Fundraising',color:'#e8a020',pct:15},
+  {key:'staff',label:'Staff & HR',color:'#e05a3a',pct:12},
+  {key:'reserve',label:'Reserve Fund',color:'#8a9ab0',pct:8}
+];
+const PROGRAMS=[
+  {name:'Youth Education Initiative',tier:'t1',color:'#0e9e78',budget:52000},
+  {name:'Community Outreach',tier:'t2',color:'#1a3a5c',budget:48000},
+  {name:'Emergency Relief Fund',tier:'t1',color:'#e05a3a',budget:30000},
+  {name:'Arts & Culture Program',tier:'t2',color:'#e8a020',budget:38000},
+  {name:'Senior Services',tier:'t3',color:'#8a9ab0',budget:22000},
+  {name:'Environmental Projects',tier:'t3',color:'#0e9e78',budget:18000}
+];
+const SCENARIOS=[
+  {key:'optimistic',label:'Optimistic',title:'Strong Growth',sub:'+20% retention boost',ret1:99,ret2:80,ret3:50,color:'#0e9e78'},
+  {key:'base',label:'Base Case',title:'Current Plan',sub:'Baseline assumptions',ret1:94,ret2:67,ret3:35,color:'#1a3a5c'},
+  {key:'pessimistic',label:'Pessimistic',title:'Donor Attrition',sub:'−20% retention drop',ret1:75,ret2:50,ret3:18,color:'#e05a3a'}
+];
+
+let S={year:'2026',seg:'all',ret1:94,ret2:67,ret3:35,selectedMonth:null,scenario:'base',budgetPcts:[45,20,15,12,8]};
+let charts={};
+let cfExpenses={staff:8500,ops:5200,programs:4800,other:2000};
+
+const fmt=n=>'$'+Math.round(n).toLocaleString();
+const fmtK=n=>'$'+Math.round(n/1000)+'k';
+function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+
+function calcForecast(r1,r2,r3,yr){
+  const yg={2026:0,2027:0.10,2028:0.22}[parseInt(yr)]||0;
+  const c1=Math.round(BASE.t1.contribution*(r1/BASE.t1.baseRet)*(1+yg));
+  const c2=Math.round(BASE.t2.contribution*(r2/BASE.t2.baseRet)*(1+yg));
+  const c3=Math.round(BASE.t3.contribution*(r3/BASE.t3.baseRet)*(1+yg));
+  const total=c1+c2+c3;
+  const monthly=MONTHS.map((_,i)=>({
+    total:Math.round((total/12)*SEASONAL[i]),
+    t1:Math.round((c1/12)*SEASONAL[i]),
+    t2:Math.round((c2/12)*SEASONAL[i]),
+    t3:Math.round((c3/12)*SEASONAL[i])
+  }));
+  return{monthly,annual:total,c1,c2,c3};
+}
+function getFC(){return calcForecast(S.ret1,S.ret2,S.ret3,S.year);}
+
+function showSection(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('visible'));
+  document.getElementById('sec-'+name).classList.add('visible');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(name==='forecast')renderForecast();
+  else if(name==='budget')renderBudget();
+  else if(name==='cashflow')renderCashflow();
+  else if(name==='scenario')renderScenario();
+  else if(name==='programs')renderPrograms();
+}
+
+function renderForecast(){
+  const fc=getFC();
+  const segLabel=S.seg==='all'?'All segments':BASE[S.seg].label;
+  document.getElementById('chart-title').textContent='Monthly donation trends & '+S.year+' forecast — '+segLabel;
+  const donors=S.seg==='all'?1150:S.seg==='t1'?142:S.seg==='t2'?388:620;
+  const contrib=S.seg==='all'?fc.annual:S.seg==='t1'?fc.c1:S.seg==='t2'?fc.c2:fc.c3;
+  const ret=S.seg==='all'?Math.round((S.ret1+S.ret2+S.ret3)/3):S.seg==='t1'?S.ret1:S.seg==='t2'?S.ret2:S.ret3;
+  document.getElementById('forecast-metrics').innerHTML=`
+    <div class="metric-card"><div class="m-label">Active donors</div><div class="m-value">${donors.toLocaleString()}</div><div class="m-sub">${segLabel}</div></div>
+    <div class="metric-card amber"><div class="m-label">${S.year} forecast</div><div class="m-value">${fmt(contrib)}</div><span class="m-badge badge-green">+10.3% YoY</span></div>
+    <div class="metric-card navy"><div class="m-label">Avg. retention</div><div class="m-value">${ret}%</div><div class="m-sub">adjusted assumption</div></div>
+    <div class="metric-card coral"><div class="m-label">Peak month</div><div class="m-value">Dec</div><div class="m-sub">38%+ of Q4 total</div></div>`;
+  const data=fc.monthly.map(m=>S.seg==='all'?m.total:S.seg==='t1'?m.t1:S.seg==='t2'?m.t2:m.t3);
+  const color=S.seg==='t1'?'#0e9e78':S.seg==='t2'?'#1a3a5c':S.seg==='t3'?'#e8a020':'#1a3a5c';
+  const bg=S.seg==='t1'?'rgba(14,158,120,0.18)':S.seg==='t2'?'rgba(26,58,92,0.18)':S.seg==='t3'?'rgba(232,160,32,0.18)':'rgba(26,58,92,0.15)';
+  destroyChart('main');
+  const datasets=[{label:S.year+' Forecast',data,backgroundColor:data.map((_,i)=>i===S.selectedMonth?color:bg),borderColor:color,borderWidth:1.5,borderRadius:5,type:'bar'}];
+  if(S.seg==='all'){
+    datasets.push({label:'2025 Actual',data:HIST[2025],type:'line',borderColor:'#8a9ab0',borderDash:[4,2],borderWidth:1.5,pointRadius:3,pointBackgroundColor:'#8a9ab0',fill:false,tension:.35});
+    datasets.push({label:'2024 Actual',data:HIST[2024],type:'line',borderColor:'#d0cfc8',borderDash:[6,3],borderWidth:1,pointRadius:2,pointBackgroundColor:'#d0cfc8',fill:false,tension:.35});
+  }
+  document.getElementById('chart-legend').innerHTML=datasets.map(d=>'<span><span class="dot" style="background:'+d.borderColor+'"></span>'+d.label+'</span>').join('');
+  charts.main=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels:MONTHS,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)}`}}},scales:{y:{ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}},onClick:(e,els)=>{if(els.length&&els[0].datasetIndex===0){S.selectedMonth=els[0].index;renderForecast();}}}});
+  const md=document.getElementById('month-detail');
+  if(S.selectedMonth===null){md.innerHTML='<span>Click any bar to view monthly breakdown by tier.</span>';}
+  else{const m=fc.monthly[S.selectedMonth];md.innerHTML=`<div class="md-title">${MONTHS[S.selectedMonth]} ${S.year} — Tier Breakdown</div><div class="md-row"><span style="color:#0e9e78;font-weight:600">Tier 1 — Champions</span><span>${fmt(m.t1)}</span></div><div class="md-row"><span style="color:#1a3a5c;font-weight:600">Tier 2 — Regulars</span><span>${fmt(m.t2)}</span></div><div class="md-row"><span style="color:#e8a020;font-weight:600">Tier 3 — Growth Targets</span><span>${fmt(m.t3)}</span></div><div class="md-row"><span>Total</span><span>${fmt(m.total)}</span></div>`;}
+  document.getElementById('seg-cards-grid').innerHTML=['t1','t2','t3'].map(t=>{
+    const b=BASE[t];const contrib2=t==='t1'?fc.c1:t==='t2'?fc.c2:fc.c3;const ret2=t==='t1'?S.ret1:t==='t2'?S.ret2:S.ret3;
+    const active=(S.seg===t||S.seg==='all')?'active':'';const tLabel=t==='t1'?'Tier 1':t==='t2'?'Tier 2':'Tier 3';
+    const strategy=t==='t1'?'Personal stewardship — thank-you calls, exclusive impact reports, and leadership event invitations.':t==='t2'?'Targeted upgrade campaigns — monthly giving prompts, milestone badges, impact newsletters.':'Structured re-engagement in Q1 and Q3 — personalized outreach and low-barrier giving options.';
+    return `<div class="seg-card ${active}" onclick="selectSeg('${t}')"><div class="seg-tier" style="color:${b.color}">${tLabel}</div><div class="seg-name">${b.label}</div><table class="seg-table"><tr><td>Donors</td><td>${b.donors.toLocaleString()}</td></tr><tr><td>Avg. giving</td><td>${fmt(b.avgGiving)}</td></tr><tr><td>Retention</td><td>${ret2}%</td></tr><tr><td>Est. ${S.year} contribution</td><td>${fmt(contrib2)}</td></tr></table><div class="seg-strategy">${strategy}</div></div>`;
+  }).join('');
+  document.getElementById('obs-list').innerHTML=`<div class="obs-item"><div class="obs-text"><strong>Growth trend:</strong> Year-over-year growth has averaged ~13% annually since 2023. The ${S.year} forecast projects ${fmt(fc.annual)} — a +10.3% increase over 2025 actuals.</div></div><div class="obs-item warn"><div class="obs-text"><strong>Seasonal risk:</strong> Summer months (Jun–Aug) consistently represent the lowest donation window. Plan mid-year campaigns to offset this dip.</div></div><div class="obs-item"><div class="obs-text"><strong>Q4 concentration:</strong> October–December accounts for ~38% of annual donations. Reserve drawdown may be needed in Q2 and early Q3.</div></div><div class="obs-item alert"><div class="obs-text"><strong>Tier 2 opportunity:</strong> Converting 15–20% of Regulars to Champions could add ${fmt((fc.c1/BASE.t1.donors)*60)} in annual revenue based on current giving averages.</div></div>`;
+}
+
+function selectSeg(t){S.seg=t;document.getElementById('seg-sel').value=t;S.selectedMonth=null;renderForecast();}
+
+function renderBudget(){
+  const fc=getFC();const total=fc.annual;
+  document.getElementById('budget-year-label').textContent=S.year;
+  const allocAmounts=S.budgetPcts.map(p=>Math.round(total*p/100));
+  const allocated=allocAmounts.reduce((a,b)=>a+b,0);
+  const surplus=total-allocated;
+  const totalPct=S.budgetPcts.reduce((a,b)=>a+b,0);
+  document.getElementById('budget-metrics').innerHTML=`<div class="metric-card"><div class="m-label">Total forecast</div><div class="m-value">${fmt(total)}</div><div class="m-sub">${S.year} projection</div></div><div class="metric-card amber"><div class="m-label">Total allocated</div><div class="m-value">${fmt(allocated)}</div><span class="m-badge ${totalPct>100?'badge-red':'badge-green'}">${totalPct}% of income</span></div><div class="metric-card ${surplus>=0?'':'coral'}"><div class="m-label">Projected surplus</div><div class="m-value" style="color:${surplus>=0?'#0e9e78':'#e05a3a'}">${fmt(Math.abs(surplus))}</div><span class="m-badge ${surplus>=0?'badge-green':'badge-red'}">${surplus>=0?'Surplus':'Deficit'}</span></div><div class="metric-card navy"><div class="m-label">Largest category</div><div class="m-value" style="font-size:18px">${BUDGET_CATS[S.budgetPcts.indexOf(Math.max(...S.budgetPcts))].label.split(' ')[0]}</div><div class="m-sub">${Math.max(...S.budgetPcts)}% of budget</div></div>`;
+  document.getElementById('budget-sliders').innerHTML=BUDGET_CATS.map((c,i)=>`<div class="budget-bar-wrap"><div class="budget-bar-label"><span>${c.label}</span><span>${S.budgetPcts[i]}% · ${fmt(allocAmounts[i])}</span></div><input type="range" min="0" max="60" value="${S.budgetPcts[i]}" step="1" style="width:100%;accent-color:${c.color};cursor:pointer;margin-bottom:6px" oninput="updateBudget(${i},this.value)"><div class="budget-bar-track"><div class="budget-bar-fill" style="width:${(S.budgetPcts[i]/60)*100}%;background:${c.color}"></div></div></div>`).join('');
+  document.getElementById('budget-total-line').textContent='Total allocated: '+totalPct+'% of forecast income'+(totalPct>100?' — Over budget by '+(totalPct-100)+'%':totalPct<100?' — '+Math.round(total*(100-totalPct)/100).toLocaleString()+' unallocated':'— Fully allocated');
+  destroyChart('budget');
+  charts.budget=new Chart(document.getElementById('budgetChart'),{type:'doughnut',data:{labels:BUDGET_CATS.map(c=>c.label),datasets:[{data:S.budgetPcts,backgroundColor:BUDGET_CATS.map(c=>c.color),borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{font:{size:11},padding:12,boxWidth:12}}}}});
+  document.getElementById('budget-table').innerHTML='<thead><tr><th>Category</th><th>Allocation %</th><th>Amount</th><th>Per month</th></tr></thead><tbody>'+BUDGET_CATS.map((c,i)=>`<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color};margin-right:6px"></span>${c.label}</td><td>${S.budgetPcts[i]}%</td><td>${fmt(allocAmounts[i])}</td><td>${fmt(allocAmounts[i]/12)}</td></tr>`).join('')+'<tr style="font-weight:600"><td>Total</td><td>'+totalPct+'%</td><td>'+fmt(allocated)+'</td><td>'+fmt(allocated/12)+'</td></tr></tbody>';
+}
+
+function updateBudget(i,v){S.budgetPcts[i]=+v;renderBudget();}
+
+function renderCashflow(){
+  const fc=getFC();const monthly=fc.monthly;
+  const monthlyExp=MONTHS.map((_,i)=>{const seas=[1.0,1.0,1.05,1.0,1.0,0.95,0.9,0.9,1.05,1.0,1.1,1.2][i];return Math.round((cfExpenses.staff+cfExpenses.ops+cfExpenses.programs+cfExpenses.other)*seas);});
+  const netFlow=monthly.map((m,i)=>m.total-monthlyExp[i]);
+  const totalIncome=monthly.reduce((a,m)=>a+m.total,0);
+  const totalExp=monthlyExp.reduce((a,b)=>a+b,0);
+  const netAnnual=totalIncome-totalExp;
+  const deficitMonths=netFlow.filter(n=>n<0).length;
+  document.getElementById('cf-metrics').innerHTML=`<div class="metric-card"><div class="m-label">Annual income</div><div class="m-value">${fmt(totalIncome)}</div><div class="m-sub">${S.year} forecast</div></div><div class="metric-card coral"><div class="m-label">Annual expenses</div><div class="m-value">${fmt(totalExp)}</div><div class="m-sub">projected operating costs</div></div><div class="metric-card ${netAnnual>=0?'':'coral'}"><div class="m-label">Net annual</div><div class="m-value" style="color:${netAnnual>=0?'#0e9e78':'#e05a3a'}">${fmt(Math.abs(netAnnual))}</div><span class="m-badge ${netAnnual>=0?'badge-green':'badge-red'}">${netAnnual>=0?'Surplus':'Deficit'}</span></div><div class="metric-card amber"><div class="m-label">Deficit months</div><div class="m-value">${deficitMonths}</div><div class="m-sub">${deficitMonths>0?'reserve drawdown needed':'fully covered'}</div></div>`;
+  destroyChart('cf');
+  charts.cf=new Chart(document.getElementById('cfChart'),{type:'bar',data:{labels:MONTHS,datasets:[{label:'Donation income',data:monthly.map(m=>m.total),backgroundColor:'rgba(14,158,120,0.2)',borderColor:'#0e9e78',borderWidth:1.5,borderRadius:4},{label:'Operating expenses',data:monthlyExp,type:'line',borderColor:'#e05a3a',borderWidth:2,pointRadius:4,pointBackgroundColor:'#e05a3a',fill:false,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},padding:14,boxWidth:12}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)}`}}},scales:{y:{ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+  document.getElementById('cf-grid').innerHTML=MONTHS.map((m,i)=>{const net=netFlow[i];const cls=net>=0?'surplus':'deficit';return`<div class="cf-cell ${cls}"><div class="cf-month">${m}</div><div class="cf-amount">${net>=0?'+':''}${fmtK(net)}</div><div class="cf-label">${net>=0?'SURPLUS':'DEFICIT'}</div></div>`;}).join('');
+  document.getElementById('cf-expense-inputs').innerHTML=Object.entries(cfExpenses).map(([k,v])=>`<div class="budget-input-item"><label>${k.charAt(0).toUpperCase()+k.slice(1)} / mo · <span class="bi-val">${fmt(v)}</span></label><input type="range" min="0" max="20000" step="100" value="${v}" oninput="updateCFExp('${k}',this.value,this.parentElement.querySelector('.bi-val'))"></div>`).join('');
+}
+
+function updateCFExp(k,v,el){cfExpenses[k]=+v;el.textContent=fmt(+v);renderCashflow();}
+
+function renderScenario(){
+  document.getElementById('scenario-btns').innerHTML=SCENARIOS.map(sc=>`<button class="scenario-btn ${S.scenario===sc.key?'active':''}" onclick="selectScenario('${sc.key}')"><div class="sc-label" style="color:${sc.color}">${sc.label}</div><div class="sc-title">${sc.title}</div><div class="sc-sub">${sc.sub}</div></button>`).join('');
+  const sc=SCENARIOS.find(s=>s.key===S.scenario);
+  const fc=calcForecast(sc.ret1,sc.ret2,sc.ret3,S.year);
+  const baseFC=calcForecast(94,67,35,S.year);
+  const diff=fc.annual-baseFC.annual;
+  document.getElementById('scenario-metrics').innerHTML=`<div class="metric-card"><div class="m-label">Scenario forecast</div><div class="m-value">${fmt(fc.annual)}</div><div class="m-sub">${sc.title}</div></div><div class="metric-card ${diff>=0?'':'coral'}"><div class="m-label">vs. base case</div><div class="m-value" style="color:${diff>=0?'#0e9e78':'#e05a3a'}">${diff>=0?'+':''}${fmt(diff)}</div><span class="m-badge ${diff>=0?'badge-green':'badge-red'}">${diff>=0?'Above':'Below'} baseline</span></div><div class="metric-card amber"><div class="m-label">Retention assumptions</div><div class="m-value" style="font-size:18px">${sc.ret1}% / ${sc.ret2}%</div><div class="m-sub">Champions / Regulars</div></div><div class="metric-card navy"><div class="m-label">Budget impact</div><div class="m-value" style="font-size:18px">${diff>=0?'Expand':'Cut'}</div><div class="m-sub">${Math.abs(Math.round(diff/baseFC.annual*100))}% shift required</div></div>`;
+  destroyChart('scenario');
+  const allFCs=SCENARIOS.map(s=>calcForecast(s.ret1,s.ret2,s.ret3,S.year));
+  charts.scenario=new Chart(document.getElementById('scenarioChart'),{type:'bar',data:{labels:SCENARIOS.map(s=>s.title),datasets:[{label:'Tier 1 — Champions',data:allFCs.map(f=>f.c1),backgroundColor:'rgba(14,158,120,0.7)',borderRadius:4},{label:'Tier 2 — Regulars',data:allFCs.map(f=>f.c2),backgroundColor:'rgba(26,58,92,0.7)',borderRadius:4},{label:'Tier 3 — Growth',data:allFCs.map(f=>f.c3),backgroundColor:'rgba(232,160,32,0.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},padding:12,boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)}`}}},scales:{x:{stacked:true,ticks:{font:{size:11}}},y:{stacked:true,ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}}}}});
+  const budgetImpact=BUDGET_CATS.map(c=>({...c,base:Math.round(baseFC.annual*c.pct/100),scenario:Math.round(fc.annual*c.pct/100)}));
+  document.getElementById('scenario-impact').innerHTML='<table class="data-table"><thead><tr><th>Category</th><th>Base</th><th>'+sc.title+'</th><th>Change</th></tr></thead><tbody>'+budgetImpact.map(b=>{const d=b.scenario-b.base;return`<tr><td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${b.color};margin-right:6px"></span>${b.label}</td><td>${fmt(b.base)}</td><td>${fmt(b.scenario)}</td><td style="color:${d>=0?'#0a7a5e':'#a83820'};font-family:var(--font-mono)">${d>=0?'+':''}${fmt(d)}</td></tr>`;}).join('')+'</tbody></table>';
+}
+
+function selectScenario(k){S.scenario=k;renderScenario();}
+
+function renderPrograms(){
+  const fc=getFC();
+  const tierContrib={t1:fc.c1,t2:fc.c2,t3:fc.c3};
+  const progFunding=PROGRAMS.map(p=>{
+    const share=p.budget/(PROGRAMS.filter(x=>x.tier===p.tier).reduce((a,x)=>a+x.budget,0));
+    const funded=Math.round(tierContrib[p.tier]*share);
+    const pct=Math.min(100,Math.round(funded/p.budget*100));
+    return{...p,funded,pct,status:pct>=90?'Fully Funded':pct>=70?'At Risk':'Deficit'};
+  });
+  const fullyFunded=progFunding.filter(p=>p.status==='Fully Funded').length;
+  const atRisk=progFunding.filter(p=>p.status==='At Risk').length;
+  const totalProgramBudget=PROGRAMS.reduce((a,p)=>a+p.budget,0);
+  const totalFunded=progFunding.reduce((a,p)=>a+p.funded,0);
+  document.getElementById('prog-metrics').innerHTML=`<div class="metric-card"><div class="m-label">Total programs</div><div class="m-value">${PROGRAMS.length}</div><div class="m-sub">active initiatives</div></div><div class="metric-card"><div class="m-label">Fully funded</div><div class="m-value" style="color:#0e9e78">${fullyFunded}</div><span class="m-badge badge-green">${Math.round(fullyFunded/PROGRAMS.length*100)}% of programs</span></div><div class="metric-card amber"><div class="m-label">At risk</div><div class="m-value" style="color:#e8a020">${atRisk}</div><span class="m-badge badge-amber">needs attention</span></div><div class="metric-card coral"><div class="m-label">Funding gap</div><div class="m-value" style="font-size:20px;color:#e05a3a">${fmt(Math.max(0,totalProgramBudget-totalFunded))}</div><span class="m-badge badge-red">shortfall</span></div>`;
+  document.getElementById('prog-bars').innerHTML=progFunding.map(p=>`<div class="program-row"><div class="program-dot" style="background:${p.color}"></div><div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="program-name">${p.name}</span><span class="program-badge ${p.status==='Fully Funded'?'badge-green':p.status==='At Risk'?'badge-amber':'badge-red'}">${p.status}</span></div><div class="program-bar"><div class="program-bar-fill" style="width:${p.pct}%;background:${p.color}"></div></div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">${fmt(p.funded)} / ${fmt(p.budget)} (${p.pct}%)</div></div></div>`).join('');
+  destroyChart('prog');
+  charts.prog=new Chart(document.getElementById('progChart'),{type:'bar',data:{labels:progFunding.map(p=>p.name.split(' ').slice(0,2).join(' ')),datasets:[{label:'Budget required',data:progFunding.map(p=>p.budget),backgroundColor:'rgba(0,0,0,.07)',borderRadius:4},{label:'Funded amount',data:progFunding.map(p=>p.funded),backgroundColor:progFunding.map(p=>p.color+'cc'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{font:{size:11},padding:12,boxWidth:10}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.x)}`}}},scales:{x:{ticks:{callback:v=>fmtK(v),font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+  document.getElementById('prog-table').innerHTML='<thead><tr><th>Program</th><th>Donor tier</th><th>Budget</th><th>Funded</th><th>Coverage</th><th>Status</th></tr></thead><tbody>'+progFunding.map(p=>`<tr><td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${p.color};margin-right:6px"></span>${p.name}</td><td>${BASE[p.tier].label}</td><td>${fmt(p.budget)}</td><td>${fmt(p.funded)}</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:4px;background:#eceae4;border-radius:4px;overflow:hidden"><div style="width:${p.pct}%;height:100%;background:${p.color};border-radius:4px"></div></div><span style="font-family:var(--font-mono);font-size:11px">${p.pct}%</span></div></td><td><span class="program-badge ${p.status==='Fully Funded'?'badge-green':p.status==='At Risk'?'badge-amber':'badge-red'}">${p.status}</span></td></tr>`).join('')+'</tbody>';
+}
+
+document.getElementById('year-sel').addEventListener('change',e=>{S.year=e.target.value;S.selectedMonth=null;renderForecast();});
+document.getElementById('seg-sel').addEventListener('change',e=>{S.seg=e.target.value;S.selectedMonth=null;renderForecast();});
+['ret1','ret2','ret3'].forEach(id=>{document.getElementById(id).addEventListener('input',e=>{S[id]=+e.target.value;document.getElementById(id==='ret1'?'r1v':id==='ret2'?'r2v':'r3v').textContent=e.target.value+'%';renderForecast();});});
+
+const now=new Date();
+document.getElementById('nav-date').textContent=now.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+document.getElementById('footer-date').textContent='Generated '+now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+renderForecast();
+</script>
+</body>
+</html>
